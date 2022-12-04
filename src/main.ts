@@ -1,3 +1,3 @@
-import day2First from './day2/second.js';
+import day3Second from './day3/second.js';
 
-day2First();
+day3Second();
