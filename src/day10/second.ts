@@ -3,15 +3,6 @@ import firstFn from './first.js';
 // @ts-ignore
 const { records, parsed } = firstFn();
 
-// disable typescript check for this line
-// @ts-ignore
-String.prototype._replaceAt = function (index, replacement) {
-  return (
-    this.substring(0, index) +
-    replacement +
-    this.substring(index + replacement.length)
-  );
-};
 
 const recordsKeys = Object.keys(records).map((e) => Number(e));
 const minKey = Math.min(...recordsKeys);
