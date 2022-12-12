@@ -1,4 +1,4 @@
-import { test, orderLevel } from './input.js';
+import { testInput, orderLevel, realInput } from './input.js';
 
 const findCharOrderLevel = (char) => {
   const keys = Object.keys(orderLevel);
@@ -10,92 +10,84 @@ const findCharOrderLevel = (char) => {
   }
 };
 
-export default () => {
-  // Apply a BFS algorithm to find the shortest path from starting node to ending node
+let startingPoint = [];
+export let endingPoint = [];
+// find "S" and "E" in the test input, mark them as starting and ending nodes using tuples
+export const parsed = realInput.map((e, i) => {
+  const startinggIndex = e.indexOf('S');
+  const endingIndex = e.indexOf('E');
+  if (startinggIndex !== -1) {
+    startingPoint = [i, startinggIndex];
+    e = e.replace('S', 'a');
+  }
+  if (endingIndex !== -1) {
+    endingPoint = [i, endingIndex];
+    e = e.replace('E', 'z');
+  }
+  return e;
+});
 
-    const startingNode = [0, 0];
-    const endingNode = [2, 5];
-    
-//   const startingNode = [20, 0];
-//   const endingNode = [20, 135];
+export const bfs = (graph: string[], startingPoint: number[]) => {
+  const queue = [];
+  let output = Number.MAX_SAFE_INTEGER;
+  queue.push({ position: startingPoint, distance: 0 });
 
   const visited = new Set();
-  visited.add(startingNode.toString());
 
-  const queue = [
-    {
-      node: startingNode.toString(),
-      distance: 0,
-    },
-  ];
+  visited.add(startingPoint.toString());
 
-  while (queue.length) {
-    const { node, distance } = queue.shift();
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const { position, distance } = current;
+    const [x, y] = position;
 
-    const [x, y] = node.split(',').map((e) => Number(e));
+    const nodeChar = graph[x][y];
+    const nodeOrderLevel = findCharOrderLevel(nodeChar);
 
-    const nodeOrderLevel = findCharOrderLevel(test[x][y]);
-
-    const neighbors = [
-      [x + 1, y],
+    let nodeNeighbors = [
       [x - 1, y],
-      [x, y + 1],
+      [x + 1, y],
       [x, y - 1],
+      [x, y + 1],
     ];
 
-    for (let index = 0; index < neighbors.length; index++) {
-      const neighbor = neighbors[index];
-      const [neighborX, neighborY] = neighbor;
-      const neighborNode = test[neighborX]?.[neighborY];
-      const neighborString = neighbor.toString();
+    let filteredNeighbors = nodeNeighbors.filter((neighborNode) => {
+      const [nx, ny] = neighborNode;
 
+      const isVisited = visited.has(neighborNode.toString());
 
-      const isVisited = visited.has(neighborString);
+      const neighborNodeChar = graph[nx]?.[ny];
+      const neighborNodeOrderLevel = findCharOrderLevel(neighborNodeChar);
 
-      if (isVisited || !neighborNode) {
-        continue;
+      const neighborNodeOrderLevelAtmostOneLevelHigher =
+        neighborNodeOrderLevel <= nodeOrderLevel + 1;
+
+      if (isVisited) return false;
+      return neighborNodeOrderLevelAtmostOneLevelHigher;
+    });
+
+    for (let index = 0; index < filteredNeighbors.length; index++) {
+      const neighbor = filteredNeighbors[index];
+
+      visited.add(neighbor.toString());
+
+      const nodeDistance = distance + 1;
+
+      if (neighbor.toString() === endingPoint.toString()) {
+        output = nodeDistance < output ? nodeDistance : output;
       }
 
-      const neighborOrderLevel = findCharOrderLevel(neighborNode);
-      const sameLevelOrOneAbove =
-        neighborOrderLevel === nodeOrderLevel ||
-        neighborOrderLevel === nodeOrderLevel + 1;
-
-      if (!sameLevelOrOneAbove) {
-        continue;
-      }
-
-    //   if (neighborNode === 'i') {
-    //     console.log({
-    //       currentNode: test[x][y],
-    //       neighborNode: test[neighborX][neighborY],
-    //       x, y, neighborX, neighborY,
-    //     });
-    //   }
-
-
-      visited.add(neighborString);
-      queue.push({
-        node: neighborString,
-        distance: distance + 1,
-      });
-
-    //   if (neighborString === endingNode.toString()) {
-      if (neighborNode === 'z') {
-        console.log({ distance: distance + 1 });
-        // return distance + 1;
-      }
+      queue.push({ position: neighbor, distance: nodeDistance });
     }
   }
 
-  //   console.dir(
-  //     {
-  //       visited: Array.from(visited).sort((a: string, b: string) => {
-  //         a = a.split(',')[0];
-  //         b = b.split(',')[0];
-  //         return Number(a) - Number(b);
-  //       }),
-  //     },
-  //     { maxArrayLength: null },
-  //   );
+  return output
+};
+
+export default () => {
+  // Apply a BFS algorithm to find the shortest path from starting node to ending node
+
+  const output = bfs(parsed, startingPoint);
+  console.log({output});
+  
 };
